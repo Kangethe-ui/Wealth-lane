@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wealth Lane - Premium Financial Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0f0c;
+            color: #e8e6e3;
+            overflow-x: hidden;
+        }
+        
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .glass-panel {
+            background: rgba(10, 15, 12, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        .gold-gradient {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e5c2 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .emerald-gradient {
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+        }
+        
+        .bull-icon {
+            filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.3));
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #d4af37, #f4e5c2);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.15);
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+        
+        .metric-card {
+            background: linear-gradient(145deg, rgba(6, 78, 59, 0.4), rgba(10, 15, 12, 0.8));
+        }
+        
+        .chart-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 2s ease-out forwards;
+        }
+        
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .pulse-gold {
+            animation: pulseGold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulseGold {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0a0f0c;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 4px;
+        }
+        
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #d4af37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+        }
+        
+        .btn-secondary {
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-2px);
+        }
+    </style>
+<base target="_blank">
+</head>
+<body class="custom-scrollbar">
+
+    <!-- 3D Background Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-panel border-b border-yellow-600/10">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <!-- Bull Logo SVG -->
+                    <svg class="w-10 h-10 bull-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bullGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#d4af37;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#f4e5c2;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Bull Head -->
+                        <path d="M50 15 C30 15 20 35 20 50 C20 65 30 75 40 80 L40 90 L45 85 L50 90 L55 85 L60 90 L60 80 C70 75 80 65 80 50 C80 35 70 15 50 15 Z" fill="url(#bullGradient)" />
+                        <!-- Horns -->
+                        <path d="M25 30 Q10 20 5 35 Q15 25 25 35" fill="#d4af37" stroke="#f4e5c2" stroke-width="2"/>
+                        <path d="M75 30 Q90 20 95 35 Q85 25 75 35" fill="#d4af37" stroke="#f4e5c2" stroke-width="2"/>
+                        <!-- Eyes -->
+                        <circle cx="35" cy="45" r="4" fill="#0a0f0c"/>
+                        <circle cx="65" cy="45" r="4" fill="#0a0f0c"/>
+                        <!-- Nostrils -->
+                        <ellipse cx="45" cy="65" rx="3" ry="5" fill="#0a0f0c"/>
+                        <ellipse cx="55" cy="65" rx="3" ry="5" fill="#0a0f0c"/>
+                        <!-- Ring in nose -->
+                        <circle cx="50" cy="70" r="6" fill="none" stroke="#d4af37" stroke-width="2"/>
+                    </svg>
+                    <span class="text-2xl font-display font-bold gold-gradient tracking-wide">Wealth Lane</span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#dashboard" class="nav-link text-sm font-medium text-gray-300 hover:text-yellow-500 transition-colors">Dashboard</a>
+                    <a href="#portfolio" class="nav-link text-sm font-medium text-gray-300 hover:text-yellow-500 transition-colors">Portfolio</a>
+                    <a href="#analytics" class="nav-link text-sm font-medium text-gray-300 hover:text-yellow-500 transition-colors">Analytics</a>
+                    <a href="#settings" class="nav-link text-sm font-medium text-gray-300 hover:text-yellow-500 transition-colors">Settings</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button class="btn-secondary px-6 py-2 rounded-full text-sm font-medium">Sign In</button>
+                    <button class="btn-primary px-6 py-2 rounded-full text-sm font-medium text-black">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative z-10 pt-32 pb-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8">
+                    <div class="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+                        <span class="w-2 h-2 rounded-full bg-yellow-500 pulse-gold"></span>
+                        <span class="text-xs font-medium text-yellow-500 tracking-wider uppercase">Now in 3D</span>
+                    </div>
+                    
+                    <h1 class="text-5xl lg:text-7xl font-display font-bold leading-tight">
+                        Master Your <br>
+                        <span class="gold-gradient">Financial Future</span>
+                    </h1>
+                    
+                    <p class="text-lg text-gray-400 max-w-lg leading-relaxed">
+                        Track, analyze, and grow your wealth with precision. Wealth Lane combines cutting-edge 3D visualization with powerful portfolio management tools.
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-4">
+                        <button class="btn-primary px-8 py-4 rounded-full text-base font-semibold text-black flex items-center space-x-2">
+                            <span>Start Free Trial</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        </button>
+                        <button class="btn-secondary px-8 py-4 rounded-full text-base font-semibold flex items-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>Watch Demo</span>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-8 pt-4">
+                        <div>
+                            <p class="text-3xl font-bold text-white">$2.4B+</p>
+                            <p class="text-sm text-gray-500">Assets Tracked</p>
+                        </div>
+                        <div class="w-px h-12 bg-gray-700"></div>
+                        <div>
+                            <p class="text-3xl font-bold text-white">50K+</p>
+                            <p class="text-sm text-gray-500">Active Users</p>
+                        </div>
+                        <div class="w-px h-12 bg-gray-700"></div>
+                        <div>
+                            <p class="text-3xl font-bold text-emerald-400">+24%</p>
+                            <p class="text-sm text-gray-500">Avg. Growth</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3D Floating Dashboard Preview -->
+                <div class="relative floating">
+                    <div class="glass-panel rounded-3xl p-6 transform rotate-y-12 hover:rotate-0 transition-transform duration-700">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <p class="text-sm text-gray-400">Total Net Worth</p>
+                                <p class="text-4xl font-bold gold-gradient">$847,293.00</p>
+                            </div>
+                            <div class="flex items-center space-x-1 text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                <span class="text-sm font-medium">+12.5%</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini Chart -->
+                        <svg class="w-full h-32 mb-6" viewBox="0 0 400 100" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#d4af37;stop-opacity:0.3" />
+                                    <stop offset="100%" style="stop-color:#d4af37;stop-opacity:0" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,80 Q50,70 100,60 T200,40 T300,50 T400,20 L400,100 L0,100 Z" fill="url(#chartGradient)" />
+                            <path d="M0,80 Q50,70 100,60 T200,40 T300,50 T400,20" fill="none" stroke="#d4af37" stroke-width="3" class="chart-line"/>
+                        </svg>
+                        
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-white/5 rounded-xl p-4">
+                                <p class="text-xs text-gray-400 mb-1">Stocks</p>
+                                <p class="text-lg font-semibold text-white">$432K</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-4">
+                                <p class="text-xs text-gray-400 mb-1">Crypto</p>
+                                <p class="text-lg font-semibold text-white">$128K</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-4">
+                                <p class="text-xs text-gray-400 mb-1">Real Estate</p>
+                                <p class="text-lg font-semibold text-white">$287K</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Floating Elements -->
+                    <div class="absolute -top-6 -right-6 glass-panel rounded-2xl p-4 animate-pulse">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Dividend</p>
+                                <p class="text-sm font-bold text-emerald-400">+$1,240</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="relative z-10 py-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-display font-bold mb-4">Your Financial <span class="gold-gradient">Command Center</span></h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">Real-time insights into your wealth with interactive 3D visualizations and comprehensive analytics.</p>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Main Balance Card -->
+                <div class="lg:col-span-2 glass-panel rounded-3xl p-8 card-hover">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <p class="text-gray-400 mb-1">Total Portfolio Value</p>
+                            <h3 class="text-5xl font-bold text-white mb-2" id="totalBalance">$0</h3>
+                            <div class="flex items-center space-x-2 text-emerald-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                <span class="font-semibold">+8.4% ($64,230)</span>
+                                <span class="text-gray-500 text-sm">this month</span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-4 py-2 rounded-lg bg-white/5 text-sm hover:bg-white/10 transition-colors">1D</button>
+                            <button class="px-4 py-2 rounded-lg bg-yellow-500/20 text-yellow-500 text-sm font-medium">1W</button>
+                            <button class="px-4 py-2 rounded-lg bg-white/5 text-sm hover:bg-white/10 transition-colors">1M</button>
+                            <button class="px-4 py-2 rounded-lg bg-white/5 text-sm hover:bg-white/10 transition-colors">1Y</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Interactive Chart Area -->
+                    <div class="relative h-64 w-full bg-gradient-to-b from-emerald-900/20 to-transparent rounded-2xl overflow-hidden">
+                        <canvas id="mainChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Asset Allocation -->
+                <div class="glass-panel rounded-3xl p-8 card-hover">
+                    <h4 class="text-xl font-semibold mb-6">Asset Allocation</h4>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Stocks</p>
+                                    <p class="text-xs text-gray-400">42% of portfolio</p>
+                                </div>
+                            </div>
+                            <p class="font-bold text-emerald-400">+$12.4k</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Crypto</p>
+                                    <p class="text-xs text-gray-400">28% of portfolio</p>
+                                </div>
+                            </div>
+                            <p class="font-bold text-emerald-400">+24.8k</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Real Estate</p>
+                                    <p class="text-xs text-gray-400">18% of portfolio</p>
+                                </div>
+                            </div>
+                            <p class="font-bold text-emerald-400">+$8.2k</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-gray-500/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Cash</p>
+                                    <p class="text-xs text-gray-400">12% of portfolio</p>
+                                </div>
+                            </div>
+                            <p class="font-bold text-gray-400">$0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="relative z-10 py-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-panel rounded-2xl p-6 card-hover group">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Smart Analytics</h3>
+                    <p class="text-sm text-gray-400">AI-powered insights and predictive modeling for your investments.</p>
+                </div>
+                
+                <div class="glass-panel rounded-2xl p-6 card-hover group">
+                    <div class="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Bank-Level Security</h3>
+                    <p class="text-sm text-gray-400">256-bit encryption and biometric authentication keep your data safe.</p>
+                </div>
+                
+                <div class="glass-panel rounded-2xl p-6 card-hover group">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Global Markets</h3>
+                    <p class="text-sm text-gray-400">Track investments across 50+ exchanges and 100+ countries worldwide.</p>
+                </div>
+                
+                <div class="glass-panel rounded-2xl p-6 card-hover group">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Tax Optimization</h3>
+                    <p class="text-sm text-gray-400">Automated tax-loss harvesting and optimization strategies.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Settings/Customization Section -->
+    <section id="settings" class="relative z-10 py-20 px-6">
+        <div class="max-w-4xl mx-auto glass-panel rounded-3xl p-8 md:p-12">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-3xl font-display font-bold mb-2">Customize Your Experience</h2>
+                    <p class="text-gray-400">Edit settings to match your preferences</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Display Currency</label>
+                        <select class="input-field w-full px-4 py-3 rounded-xl text-white" id="currencySelect">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="JPY">JPY (¥)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Theme Accent</label>
+                        <select class="input-field w-full px-4 py-3 rounded-xl text-white" id="themeSelect">
+                            <option value="gold">Gold & Emerald</option>
+                            <option value="blue">Ocean Blue</option>
+                            <option value="purple">Royal Purple</option>
+                            <option value="red">Crimson Red</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Dashboard Layout</label>
+                    <div class="grid grid-cols-3 gap-4">
+                        <button class="p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-center transition-all hover:scale-105">
+                            <div class="w-full h-12 bg-white/10 rounded mb-2 grid grid-cols-2 gap-1 p-1">
+                                <div class="bg-yellow-500/30 rounded"></div>
+                                <div class="bg-white/10 rounded"></div>
+                            </div>
+                            <span class="text-xs">Compact</span>
+                        </button>
+                        <button class="p-4 rounded-xl border border-white/10 bg-white/5 text-center transition-all hover:scale-105 hover:border-yellow-500/30">
+                            <div class="w-full h-12 bg-white/10 rounded mb-2 grid grid-cols-3 gap-1 p-1">
+                                <div class="col-span-2 bg-white/10 rounded"></div>
+                                <div class="bg-white/10 rounded"></div>
+                            </div>
+                            <span class="text-xs">Standard</span>
+                        </button>
+                        <button class="p-4 rounded-xl border border-white/10 bg-white/5 text-center transition-all hover:scale-105 hover:border-yellow-500/30">
+                            <div class="w-full h-12 bg-white/10 rounded mb-2 grid grid-rows-2 gap-1 p-1">
+                                <div class="bg-white/10 rounded"></div>
+                                <div class="bg-white/10 rounded"></div>
+                            </div>
+                            <span class="text-xs">Detailed</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 rounded-xl bg-white/5">
+                    <div>
+                        <p class="font-medium">3D Animations</p>
+                        <p class="text-sm text-gray-400">Enable WebGL background effects</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer" id="animationToggle">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                    </label>
+                </div>
+                
+                <div class="pt-6 border-t border-white/10">
+                    <button class="btn-primary w-full py-4 rounded-xl text-base font-semibold text-black" onclick="saveSettings()">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-white/10 py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none">
+                    <path d="M50 15 C30 15 20 35 20 50 C20 65 30 75 40 80 L40 90 L45 85 L50 90 L55 85 L60 90 L60 80 C70 75 80 65 80 50 C80 35 70 15 50 15 Z" fill="#d4af37" />
+                </svg>
+                <span class="text-xl font-display font-bold gold-gradient">Wealth Lane</span>
+            </div>
+            <p class="text-gray-500 text-sm">© 2026 Wealth Lane. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Three.js 3D Background
+        let scene, camera, renderer, particles, bullMesh;
+        let mouseX = 0, mouseY = 0;
+        
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x0a0f0c, 0.02);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+            
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            // Create floating particles (golden dust)
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 800;
+            const posArray = new Float32Array(particlesCount * 3);
+            
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 100;
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.15,
+                color: 0xd4af37,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+            
+            particles = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particles);
+            
+            // Create geometric bull representation (abstract)
+            const bullGroup = new THREE.Group();
+            
+            // Main body
+            const bodyGeo = new THREE.IcosahedronGeometry(4, 1);
+            const bodyMat = new THREE.MeshPhongMaterial({
+                color: 0xd4af37,
+                emissive: 0x064e3b,
+                emissiveIntensity: 0.2,
+                shininess: 100,
+                transparent: true,
+                opacity: 0.9,
+                wireframe: true
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            bullGroup.add(body);
+            
+            // Inner core
+            const coreGeo = new THREE.IcosahedronGeometry(2, 0);
+            const coreMat = new THREE.MeshPhongMaterial({
+                color: 0x064e3b,
+                emissive: 0xd4af37,
+                emissiveIntensity: 0.5
+            });
+            const core = new THREE.Mesh(coreGeo, coreMat);
+            bullGroup.add(core);
+            
+            // Orbiting rings
+            const ringGeo = new THREE.TorusGeometry(6, 0.1, 16, 100);
+            const ringMat = new THREE.MeshBasicMaterial({ 
+                color: 0xd4af37, 
+                transparent: true, 
+                opacity: 0.3 
+            });
+            const ring1 = new THREE.Mesh(ringGeo, ringMat);
+            ring1.rotation.x = Math.PI / 2;
+            bullGroup.add(ring1);
+            
+            const ring2 = new THREE.Mesh(ringGeo, ringMat);
+            ring2.rotation.y = Math.PI / 2;
+            bullGroup.add(ring2);
+            
+            bullMesh = bullGroup;
+            bullMesh.position.set(15, 0, -10);
+            scene.add(bullMesh);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const pointLight = new THREE.PointLight(0xd4af37, 2, 50);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+            
+            const pointLight2 = new THREE.PointLight(0x064e3b, 2, 50);
+            pointLight2.position.set(-10, -10, 10);
+            scene.add(pointLight2);
+            
+            // Mouse movement
+            document.addEventListener('mousemove', onDocumentMouseMove, false);
+            window.addEventListener('resize', onWindowResize, false);
+            
+            animate();
+        }
+        
+        function onDocumentMouseMove(event) {
+            mouseX = (event.clientX - window.innerWidth / 2) / 100;
+            mouseY = (event.clientY - window.innerHeight / 2) / 100;
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate particles
+            particles.rotation.x += 0.0005;
+            particles.rotation.y += 0.0005;
+            
+            // Animate bull mesh
+            if(bullMesh) {
+                bullMesh.rotation.x += 0.005;
+                bullMesh.rotation.y += 0.01;
+                bullMesh.position.y = Math.sin(Date.now() * 0.001) * 2;
+                
+                // Mouse interaction
+                bullMesh.rotation.x += mouseY * 0.05;
+                bullMesh.rotation.y += mouseX * 0.05;
+            }
+            
+            // Camera parallax
+            camera.position.x += (mouseX - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Initialize 3D scene
+        initThree();
+        
+        // Counter Animation
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            const range = end - start;
+            const minTimer = 50;
+            let stepTime = Math.abs(Math.floor(duration / range));
+            stepTime = Math.max(stepTime, minTimer);
+            const startTime = new Date().getTime();
+            const endTime = startTime + duration;
+            let timer;
+            
+            function run() {
+                const now = new Date().getTime();
+                const remaining = Math.max((endTime - now) / duration, 0);
+                const value = Math.round(end - (remaining * range));
+                obj.innerHTML = '$' + value.toLocaleString() + '.00';
+                if (value == end) {
+                    clearInterval(timer);
+                }
+            }
+            
+            timer = setInterval(run, stepTime);
+            run();
+        }
+        
+        // Start counter when in view
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateValue("totalBalance", 0, 847293, 2000);
+                    observer.unobserve(entry.target);
+                }
+            });
+        });
+        
+        observer.observe(document.getElementById("totalBalance"));
+        
+        // Chart Drawing
+        function drawChart() {
+            const canvas = document.getElementById('mainChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw gradient area
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, 'rgba(212, 175, 55, 0.3)');
+            gradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
+            
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            
+            const points = [0.8, 0.75, 0.7, 0.72, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2];
+            const stepX = width / (points.length - 1);
+            
+            points.forEach((point, i) => {
+                const x = i * stepX;
+                const y = height * point;
+                ctx.lineTo(x, y);
+            });
+            
+            ctx.lineTo(width, height);
+            ctx.closePath();
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Draw line
+            ctx.beginPath();
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            
+            points.forEach((point, i) => {
+                const x = i * stepX;
+                const y = height * point;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
+            
+            // Draw dots
+            points.forEach((point, i) => {
+                if (i % 3 === 0) {
+                    const x = i * stepX;
+                    const y = height * point;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#d4af37';
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x, y, 8, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(212, 175, 55, 0.2)';
+                    ctx.fill();
+                }
+            });
+        }
+        
+        // Draw chart on load and resize
+        window.addEventListener('load', drawChart);
+        window.addEventListener('resize', drawChart);
+        
+        // Settings Management
+        function saveSettings() {
+            const currency = document.getElementById('currencySelect').value;
+            const theme = document.getElementById('themeSelect').value;
+            const animations = document.getElementById('animationToggle').checked;
+            
+            // Save to localStorage (simulating backend)
+            localStorage.setItem('wealthLaneSettings', JSON.stringify({
+                currency,
+                theme,
+                animations
+            }));
+            
+            // Show success animation
+            const btn = document.querySelector('button[onclick="saveSettings()"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Saved Successfully!';
+            btn.style.background = '#10b981';
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = '';
+            }, 2000);
+            
+            // Apply theme changes immediately
+            applyTheme(theme);
+        }
+        
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            const colors = {
+                gold: { primary: '#d4af37', secondary: '#064e3b' },
+                blue: { primary: '#3b82f6', secondary: '#1e3a8a' },
+                purple: { primary: '#8b5cf6', secondary: '#4c1d95' },
+                red: { primary: '#ef4444', secondary: '#7f1d1d' }
+            };
+            
+            const selected = colors[theme];
+            // Update CSS variables or inline styles based on selection
+            document.querySelectorAll('.gold-gradient').forEach(el => {
+                el.style.background = `linear-gradient(135deg, ${selected.primary} 0%, #ffffff 50%, ${selected.primary} 100%)`;
+                el.style.webkitBackgroundClip = 'text';
+                el.style.webkitTextFillColor = 'transparent';
+            });
+        }
+        
+        // Load saved settings on page load
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('wealthLaneSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                document.getElementById('currencySelect').value = settings.currency;
+                document.getElementById('themeSelect').value = settings.theme;
+                document.getElementById('animationToggle').checked = settings.animations;
+                applyTheme(settings.theme);
+            }
+        });
+        
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // GSAP Animations for scroll reveals
+        gsap.registerPlugin();
+        
+        gsap.utils.toArray('.card-hover').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: "top 85%",
+                },
+                y: 50,
+                opacity: 0,
+                duration: 0.8,
+                delay: i * 0.1,
+                ease: "power3.out"
+            });
+        });
+    </script>
+</body>
+</html>
